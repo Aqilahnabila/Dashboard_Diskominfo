@@ -313,7 +313,7 @@ with st.sidebar:
         st.image(str(logo_kota_path), width=80)
 
     with logo_col2:
-        st.image(str(logo_kominfo_path), width=125)
+        st.image(str(logo_kominfo_path), width=145)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
