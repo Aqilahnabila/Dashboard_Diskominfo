@@ -1154,7 +1154,24 @@ with tab_unduh:
     # Pratinjau PDF
     if "laporan_pdf" in st.session_state:
         st.markdown("#### Pratinjau Laporan")
-        st.pdf(st.session_state["laporan_pdf"], height=700)
+
+        pdf_base64 = base64.b64encode(
+            st.session_state["laporan_pdf"]
+        ).decode("utf-8")
+
+        pdf_display = f"""
+            <iframe
+                src="data:application/pdf;base64,{pdf_base64}"
+                width="100%"
+                height="700"
+                style="border: none; border-radius: 8px;"
+            ></iframe>
+        """
+
+        st.markdown(
+            pdf_display,
+            unsafe_allow_html=True
+        )
 
 
 st.markdown("---")
