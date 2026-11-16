@@ -532,10 +532,10 @@ with st.sidebar:
 
     periode = st.selectbox(
         "Periode analisis",
-        ["Harian", "Mingguan", "Bulanan", "Keseluruhan"],
+        ["Harian", "Mingguan", "Bulanan"],
         index=0,
         help="Menentukan bagaimana data digabungkan pada grafik tren & tabel: "
-        "per hari, per minggu, per bulan, atau dijumlah total untuk seluruh periode.",
+        "per hari, per minggu, atau per bulan.",
     )
 
 # ----------------------------------------------------------------------------
