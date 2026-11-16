@@ -304,13 +304,16 @@ st.caption(
 with st.sidebar:
 
     # Logo Kota Madiun dan Diskominfo
+    logo_kota_path = Path(__file__).parent / "assets" / "madiun.png"
+    logo_kominfo_path = Path(__file__).parent / "assets" / "kominfo.png"
+    
     logo_col1, logo_col2 = st.columns([1, 1], gap="small", vertical_alignment="center")
 
     with logo_col1:
-        st.image("assets/madiun.png", width=80)
+        st.image(str(logo_kota_path), width=80)
 
     with logo_col2:
-        st.image("assets/kominfo.png", width=105)
+        st.image(str(logo_kominfo_path), width=105)
 
     st.markdown("<br>", unsafe_allow_html=True)
 
