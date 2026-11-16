@@ -1,9 +1,8 @@
-# 🚦 Dashboard Analisis Data CCTV Lalu Lintas
+# 🚦 Dashboard Analisis Data Lalu Lintas
 
 Dashboard Streamlit untuk menganalisis data hasil rekap CCTV (jumlah orang/motor/mobil/truk/bus
 per lokasi per hari). Cukup unggah file Excel/CSV, data langsung dibersihkan dan dianalisis, lalu
-ditampilkan sebagai dashboard interaktif — lengkap dengan opsi unduh **laporan Word** dan
-**infografis PNG**.
+ditampilkan sebagai dashboard interaktif — lengkap dengan opsi unduh **laporan Word**.
 
 ## Fitur
 
@@ -18,7 +17,6 @@ ditampilkan sebagai dashboard interaktif — lengkap dengan opsi unduh **laporan
 - **Unduh hasil analisis** dalam 2 format tambahan:
   - 📄 **Laporan Word (.docx)** — ringkasan eksekutif otomatis (narasi insight), KPI, grafik, tabel
     ringkasan per lokasi, dan catatan kualitas data.
-  - 🖼️ **Infografis (.png)** — ringkasan visual satu halaman yang menarik untuk dibagikan.
 
 ## Cara Menjalankan
 
@@ -58,7 +56,6 @@ cctv_dashboard/
 ├── app.py            # Aplikasi Streamlit utama (UI & orkestrasi)
 ├── parser.py          # Pembacaan & pembersihan data, deteksi kualitas data, agregasi periode
 ├── report.py          # Pembuatan laporan Word (.docx) dengan grafik & narasi otomatis
-├── infographic.py     # Pembuatan infografis PNG
 ├── requirements.txt   # Daftar dependensi Python
 ├── sample_data.xlsx   # Data contoh untuk mencoba dashboard
 └── README.md
