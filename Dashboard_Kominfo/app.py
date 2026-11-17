@@ -605,6 +605,11 @@ tab_tren, tab_lokasi, tab_komposisi, tab_kualitas, tab_data, tab_unduh = st.tabs
 with tab_tren:
     st.subheader(f"Tren Volume Lalu Lintas ({periode})")
     tren = agg.groupby("Periode", as_index=False)["Total"].sum()
+    
+    if periode == "Harian":
+        tren["Periode"] = pd.to_datetime(
+            tren["Periode"]
+        ).dt.strftime("%d-%m-%Y")
     st.line_chart(tren.set_index("Periode")["Total"])
 
     st.markdown(
@@ -1011,8 +1016,17 @@ with tab_kualitas:
 # --- Tab Data Detail ---
 with tab_data:
     st.subheader(f"Data Teragregasi ({periode})")
+    agg_display = agg.sort_values(
+        ["Periode", "Total"], ascending=[True, False]
+    ).copy()
+
+    if periode == "Harian":
+        agg_display["Periode"] = pd.to_datetime(
+            agg_display["Periode"]
+        ).dt.strftime("%d-%m-%Y")
+
     st.dataframe(
-        agg.sort_values(["Periode", "Total"], ascending=[True, False]),
+        agg_display,
         use_container_width=True,
         hide_index=True,
     )
