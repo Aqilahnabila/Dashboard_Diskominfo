@@ -61,7 +61,7 @@ from parser import CATEGORIES, BULAN_ID, format_tanggal_id
 # ============================================================================
 INSTANSI = "Dinas Komunikasi dan Informatika Kota Madiun"
 KOTA = "Madiun"
-JABATAN_PENANDATANGAN = "Kepala Dinas Komunikasi dan Informatika\nKota Madiun"
+JABATAN_PENANDATANGAN = "Plt. Kepala Dinas Komunikasi dan Informatika\nKota Madiun"
 NAMA_PENANDATANGAN = "Noor Aflah, S.Kom."
 NIP_PENANDATANGAN = "197609072003121007"
 
