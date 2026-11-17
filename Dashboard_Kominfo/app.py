@@ -634,6 +634,7 @@ with tab_tren:
             )
             .fillna(0)
         )
+        pivot.index = pd.to_datetime(pivot.index).strftime("%d-%m-%Y")
         st.line_chart(pivot)
     else:
         st.caption(
