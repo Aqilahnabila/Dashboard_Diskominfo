@@ -1024,8 +1024,13 @@ with tab_data:
     )
 
     st.subheader("Data Harian Setelah Cleaning")
+    df_display = df.sort_values(["Lokasi", "Tanggal"]).copy()
+    df_display["Tanggal"] = df_display["Tanggal"].dt.strftime("%d-%m-%Y")
+
     st.dataframe(
-        df.sort_values(["Lokasi", "Tanggal"]), use_container_width=True, hide_index=True
+        df_display,
+        use_container_width=True,
+        hide_index=True,
     )
     st.download_button(
         "Unduh data harian bersih (CSV)",
