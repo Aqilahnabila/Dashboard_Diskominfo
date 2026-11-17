@@ -1059,6 +1059,9 @@ with tab_data:
 # --- Tab Unduh Hasil ---
 with tab_unduh:
     st.subheader("Unduh Hasil Analisis")
+
+    st.write("Jabatan default:", rpt.JABATAN_PENANDATANGAN)
+    
     st.markdown(
         "Laporan di bawah dibuat otomatis berdasarkan **filter yang sedang aktif** "
         f"(lokasi terpilih: {len(lokasi_terpilih)} lokasi, periode: "
