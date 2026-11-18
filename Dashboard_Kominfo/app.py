@@ -634,8 +634,11 @@ with tab_tren:
             )
             .fillna(0)
         )
-        pivot.index = pd.to_datetime(pivot.index).strftime("%d-%m-%Y")
+        if periode == "Harian":
+            pivot.index = pd.to_datetime(pivot.index).strftime("%d-%m-%Y")
+
         st.line_chart(pivot)
+
     else:
         st.caption(
             "Pilih minimal satu lokasi untuk menampilkan grafik perbandingan tren."
