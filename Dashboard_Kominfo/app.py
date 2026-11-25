@@ -15,6 +15,7 @@ import subprocess
 import shutil
 import base64
 from pathlib import Path
+import altair as alt
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -296,8 +297,10 @@ st.markdown(
 
 st.title("Dashboard Analisis Data Lalu Lintas")
 st.caption(
-    "Unggah data rekap CCTV (Excel/CSV) — data akan otomatis dibersihkan, dianalisis, "
-    "dan ditampilkan sebagai dashboard lengkap serta siap diunduh sebagai laporan."
+    "Dashboard ini menyajikan visualisasi dan analisis data pemantauan CCTV "
+    "lalu lintas Kota Madiun, mencakup ringkasan kondisi lalu lintas, tren dan "
+    "perbandingan antar lokasi, komposisi pengguna jalan, serta evaluasi "
+    "kualitas data untuk mendukung pemantauan dan penyajian informasi lalu lintas."
 )
 
 # Sidebar
@@ -600,52 +603,152 @@ tab_tren, tab_lokasi, tab_komposisi, tab_kualitas, tab_data, tab_unduh = st.tabs
     ]
 )
 
+
 # --- Tab Tren ---
 
 with tab_tren:
     st.subheader(f"Tren Volume Lalu Lintas ({periode})")
+
     tren = agg.groupby("Periode", as_index=False)["Total"].sum()
-    
+
+    # Konversi periode menjadi tanggal untuk sumbu grafik
     if periode == "Harian":
-        tren["Periode"] = pd.to_datetime(
-            tren["Periode"]
-        ).dt.strftime("%d-%m-%Y")
-    st.line_chart(tren.set_index("Periode")["Total"])
+        tren["TanggalGrafik"] = pd.to_datetime(
+            tren["Periode"], format="%Y-%m-%d"
+        )
+    elif periode == "Mingguan":
+        tren["TanggalGrafik"] = pd.to_datetime(
+            tren["Periode"] + "-1", format="%G-W%V-%u"
+        )
+    else:
+        tren["TanggalGrafik"] = pd.to_datetime(
+            tren["Periode"], format="%Y-%m"
+        )
+
+    # Grafik tren volume lalu lintas
+    zoom_tren = alt.selection_interval(
+        bind="scales",
+        encodings=["x"]
+    )
+
+    chart_tren = (
+        alt.Chart(tren)
+        .mark_line(point=True)
+        .encode(
+            x=alt.X("TanggalGrafik:T", title="Periode"),
+            y=alt.Y("Total:Q", title="Total Volume"),
+            tooltip=[
+                alt.Tooltip("Periode:N", title="Periode"),
+                alt.Tooltip("Total:Q", title="Total Volume", format=","),
+            ],
+        )
+        .add_params(zoom_tren)
+        .properties(height=350)
+    )
+
+    if "reset_tren" not in st.session_state:
+        st.session_state.reset_tren = 0
+
+    if st.button("Reset Zoom", key="btn_reset_tren"):
+        st.session_state.reset_tren += 1
+
+    st.altair_chart(
+        chart_tren,
+        use_container_width=True,
+        key=f"chart_tren_{st.session_state.reset_tren}",
+    )
+
+    # ------------------------------------------------
+    # Tren per Lokasi
+    # ------------------------------------------------
 
     st.markdown(
         """
-    <h3 style="margin-bottom: -20px; margin-top: 0;">
-        Tren per Lokasi
-    </h3>
-    """,
+        <h3 style="margin-bottom: -20px; margin-top: 0;">
+            Tren per Lokasi
+        </h3>
+        """,
         unsafe_allow_html=True,
     )
+
     pilihan_tren_lokasi = st.multiselect(
         "",
         sorted(df["Lokasi"].unique().tolist()),
         default=list(by_lokasi_sum.head(5).index),
         key="tren_lokasi",
     )
+
     if pilihan_tren_lokasi:
         pivot = (
             agg[agg["Lokasi"].isin(pilihan_tren_lokasi)]
             .pivot_table(
-                index="Periode", columns="Lokasi", values="Total", aggfunc="sum"
+                index="Periode",
+                columns="Lokasi",
+                values="Total",
+                aggfunc="sum",
             )
             .fillna(0)
+            .reset_index()
         )
-        if periode == "Harian":
-            pivot.index = pd.to_datetime(pivot.index).strftime("%d-%m-%Y")
 
-        st.line_chart(pivot)
+        # Konversi periode menjadi tanggal untuk sumbu grafik
+        if periode == "Harian":
+            pivot["TanggalGrafik"] = pd.to_datetime(
+                pivot["Periode"], format="%Y-%m-%d"
+            )
+        elif periode == "Mingguan":
+            pivot["TanggalGrafik"] = pd.to_datetime(
+                pivot["Periode"] + "-1", format="%G-W%V-%u"
+            )
+        else:
+            pivot["TanggalGrafik"] = pd.to_datetime(
+                pivot["Periode"], format="%Y-%m"
+            )
+
+        pivot_long = pivot.melt(
+            id_vars=["Periode", "TanggalGrafik"],
+            var_name="Lokasi",
+            value_name="Total",
+        )
+
+        zoom_lokasi = alt.selection_interval(
+            bind="scales",
+            encodings=["x"]
+        )
+
+        chart_lokasi = (
+            alt.Chart(pivot_long)
+            .mark_line(point=True)
+            .encode(
+                x=alt.X("TanggalGrafik:T", title="Periode"),
+                y=alt.Y("Total:Q", title="Total Volume"),
+                color=alt.Color("Lokasi:N", title="Lokasi"),
+                tooltip=[
+                    alt.Tooltip("Periode:N", title="Periode"),
+                    alt.Tooltip("Lokasi:N", title="Lokasi"),
+                    alt.Tooltip("Total:Q", title="Total Volume", format=","),
+                ],
+            )
+            .add_params(zoom_lokasi)
+            .properties(height=350)
+        )
+
+        if "reset_lokasi" not in st.session_state:
+            st.session_state.reset_lokasi = 0
+
+        if st.button("Reset Zoom", key="btn_reset_lokasi"):
+            st.session_state.reset_lokasi += 1
+
+        st.altair_chart(
+            chart_lokasi,
+            use_container_width=True,
+            key=f"chart_lokasi_{st.session_state.reset_lokasi}",
+        )
 
     else:
         st.caption(
             "Pilih minimal satu lokasi untuk menampilkan grafik perbandingan tren."
         )
-
-
-import altair as alt
 
 # --- Tab Perbandingan Lokasi ---
 with tab_lokasi:
@@ -1089,7 +1192,7 @@ with tab_unduh:
         f"s/d {rentang_tanggal[1].strftime('%d-%m-%Y')}, agregasi: {periode})."
     )
 
-    st.subheader("Identitas Laporan (Opsional)")
+    st.subheader("Pejabat Penandatangan Laporan")
 
     nama_laporan = st.text_input(
         "Nama",
