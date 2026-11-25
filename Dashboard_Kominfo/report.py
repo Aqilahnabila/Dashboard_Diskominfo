@@ -2734,7 +2734,7 @@ def _build_toc(doc):
         fc.set(qn("w:fldCharType"), kind)
 
         if kind == "begin":
-        fc.set(qn("w:dirty"), "true")
+            fc.set(qn("w:dirty"), "true")
         
         r._r.append(fc)
         return r
