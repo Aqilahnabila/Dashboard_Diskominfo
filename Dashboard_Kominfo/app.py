@@ -621,6 +621,7 @@ with tab_tren:
     with col_reset:
         if st.button("Reset", key="btn_reset_tren_volume"):
             st.session_state["reset_tren_volume"] += 1
+            st.rerun()
 
     chart_tren = (
         alt.Chart(tren)
@@ -631,13 +632,17 @@ with tab_tren:
                 title="Periode",
                 sort=tren["Periode"].tolist(),
             ),
-            y=alt.Y("Total:Q", title="Volume Lalu Lintas"),
+            y=alt.Y(
+                "Total:Q",
+                title="Volume Lalu Lintas",
+                scale=alt.Scale(zero=True),
+            ),
         )
         .properties(height=350)
         .add_params(
             alt.selection_interval(
                 bind="scales",
-                name=f"zoom_tren_volume_{st.session_state['reset_tren_volume']}",
+                name=f"zoom_volume_{st.session_state['reset_tren_volume']}",
             )
         )
     )
@@ -668,7 +673,10 @@ with tab_tren:
         pivot = (
             agg[agg["Lokasi"].isin(pilihan_tren_lokasi)]
             .pivot_table(
-                index="Periode", columns="Lokasi", values="Total", aggfunc="sum"
+                index="Periode",
+                columns="Lokasi",
+                values="Total",
+                aggfunc="sum",
             )
             .fillna(0)
         )
@@ -676,7 +684,6 @@ with tab_tren:
         if periode == "Harian":
             pivot.index = pd.to_datetime(pivot.index).strftime("%d-%m-%Y")
 
-        # Mengubah data pivot menjadi format long
         tren_lokasi = (
             pivot.reset_index()
             .melt(
@@ -690,6 +697,7 @@ with tab_tren:
         with col_reset:
             if st.button("Reset", key="btn_reset_tren_lokasi"):
                 st.session_state["reset_tren_lokasi"] += 1
+                st.rerun()
 
         chart_lokasi = (
             alt.Chart(tren_lokasi)
@@ -700,14 +708,21 @@ with tab_tren:
                     title="Periode",
                     sort=pivot.index.tolist(),
                 ),
-                y=alt.Y("Total:Q", title="Volume Lalu Lintas"),
-                color=alt.Color("Lokasi:N", title="Lokasi"),
+                y=alt.Y(
+                    "Total:Q",
+                    title="Volume Lalu Lintas",
+                    scale=alt.Scale(zero=True),
+                ),
+                color=alt.Color(
+                    "Lokasi:N",
+                    title="Lokasi",
+                ),
             )
             .properties(height=350)
             .add_params(
                 alt.selection_interval(
                     bind="scales",
-                    name=f"zoom_tren_lokasi_{st.session_state['reset_tren_lokasi']}",
+                    name=f"zoom_lokasi_{st.session_state['reset_tren_lokasi']}",
                 )
             )
         )
@@ -722,8 +737,6 @@ with tab_tren:
         st.caption(
             "Pilih minimal satu lokasi untuk menampilkan grafik perbandingan tren."
         )
-
-
 
 # --- Tab Perbandingan Lokasi ---
 with tab_lokasi:
