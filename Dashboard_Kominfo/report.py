@@ -30,6 +30,10 @@ import base64
 import textwrap
 import calendar
 from datetime import datetime
+import os
+import subprocess
+import tempfile
+import time
 
 import numpy as np
 import pandas as pd
@@ -518,6 +522,108 @@ def _force_update_fields_on_open(doc):
             return
     settings.append(uf)
 
+
+def _update_toc_with_libreoffice(docx_bytes):
+    """Memperbarui Daftar Isi dan nomor halaman menggunakan LibreOffice."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        input_path = os.path.join(tmpdir, "laporan_input.docx")
+        output_path = os.path.join(tmpdir, "laporan_final.docx")
+
+        with open(input_path, "wb") as f:
+            f.write(docx_bytes)
+
+        profile_path = os.path.join(tmpdir, "lo_profile")
+        port = 2002
+
+        soffice = subprocess.Popen([
+            "soffice",
+            "--headless",
+            f"-env:UserInstallation=file://{profile_path}",
+            f"--accept=socket,host=localhost,port={port};urp;StarOffice.ServiceManager",
+            "--norestore",
+            "--nofirststartwizard",
+            "--nodefault",
+        ])
+
+        try:
+            script = r'''
+import sys
+import time
+import uno
+from com.sun.star.beans import PropertyValue
+
+def prop(name, value):
+    p = PropertyValue()
+    p.Name = name
+    p.Value = value
+    return p
+
+local_ctx = uno.getComponentContext()
+resolver = local_ctx.ServiceManager.createInstanceWithContext(
+    "com.sun.star.bridge.UnoUrlResolver", local_ctx
+)
+
+ctx = None
+for _ in range(30):
+    try:
+        ctx = resolver.resolve(
+            "uno:socket,host=localhost,port=2002;urp;StarOffice.ComponentContext"
+        )
+        break
+    except Exception:
+        time.sleep(1)
+
+if ctx is None:
+    raise RuntimeError("LibreOffice tidak dapat dihubungkan.")
+
+desktop = ctx.ServiceManager.createInstanceWithContext(
+    "com.sun.star.frame.Desktop", ctx
+)
+
+doc = desktop.loadComponentFromURL(
+    uno.systemPathToFileUrl(sys.argv[1]),
+    "_blank",
+    0,
+    (prop("Hidden", True), prop("UpdateDocMode", 3))
+)
+
+if doc is None:
+    raise RuntimeError("Dokumen gagal dibuka.")
+
+try:
+    indexes = doc.getDocumentIndexes()
+    for i in range(indexes.getCount()):
+        indexes.getByIndex(i).update()
+
+    doc.storeAsURL(
+        uno.systemPathToFileUrl(sys.argv[2]),
+        (prop("FilterName", "Office Open XML Text"),)
+    )
+finally:
+    doc.close(True)
+'''
+
+            script_path = os.path.join(tmpdir, "update_toc.py")
+            with open(script_path, "w", encoding="utf-8") as f:
+                f.write(script)
+
+            subprocess.run(
+                ["/usr/bin/python3", script_path, input_path, output_path],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+
+            with open(output_path, "rb") as f:
+                return f.read()
+
+        finally:
+            soffice.terminate()
+            try:
+                soffice.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                soffice.kill()
 
 def _body(
     doc,
@@ -4761,10 +4867,15 @@ def generate_docx_report(df: pd.DataFrame, dq: pd.DataFrame, meta: dict) -> io.B
 
     _force_update_fields_on_open(doc)
     _fix_package_order(doc)
+
     buf = io.BytesIO()
     doc.save(buf)
     buf.seek(0)
-    return buf
+
+    # Perbarui Daftar Isi dan nomor halaman sebelum dokumen diunduh
+    final_bytes = _update_toc_with_libreoffice(buf.getvalue())
+
+    return io.BytesIO(final_bytes)
 
 
 # ============================================================================
