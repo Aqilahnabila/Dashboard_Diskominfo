@@ -626,11 +626,20 @@ with tab_tren:
         alt.Chart(tren)
         .mark_line()
         .encode(
-            x=alt.X("Periode:N", title="Periode"),
+            x=alt.X(
+                "Periode:N",
+                title="Periode",
+                sort=tren["Periode"].tolist(),
+            ),
             y=alt.Y("Total:Q", title="Volume Lalu Lintas"),
         )
         .properties(height=350)
-        .add_params(alt.selection_interval(bind="scales"))
+        .add_params(
+            alt.selection_interval(
+                bind="scales",
+                name=f"zoom_tren_volume_{st.session_state['reset_tren_volume']}",
+            )
+        )
     )
 
     st.altair_chart(
@@ -667,25 +676,40 @@ with tab_tren:
         if periode == "Harian":
             pivot.index = pd.to_datetime(pivot.index).strftime("%d-%m-%Y")
 
+        # Mengubah data pivot menjadi format long
+        tren_lokasi = (
+            pivot.reset_index()
+            .melt(
+                id_vars="Periode",
+                var_name="Lokasi",
+                value_name="Total",
+            )
+        )
+
         col_reset, _ = st.columns([1, 5])
         with col_reset:
             if st.button("Reset", key="btn_reset_tren_lokasi"):
                 st.session_state["reset_tren_lokasi"] += 1
 
         chart_lokasi = (
-            alt.Chart(pivot.reset_index())
-            .transform_fold(
-                pivot.columns.tolist(),
-                as_=["Lokasi", "Total"],
-            )
+            alt.Chart(tren_lokasi)
             .mark_line()
             .encode(
-                x=alt.X("Periode:N", title="Periode"),
+                x=alt.X(
+                    "Periode:N",
+                    title="Periode",
+                    sort=pivot.index.tolist(),
+                ),
                 y=alt.Y("Total:Q", title="Volume Lalu Lintas"),
                 color=alt.Color("Lokasi:N", title="Lokasi"),
             )
             .properties(height=350)
-            .add_params(alt.selection_interval(bind="scales"))
+            .add_params(
+                alt.selection_interval(
+                    bind="scales",
+                    name=f"zoom_tren_lokasi_{st.session_state['reset_tren_lokasi']}",
+                )
+            )
         )
 
         st.altair_chart(
@@ -698,6 +722,7 @@ with tab_tren:
         st.caption(
             "Pilih minimal satu lokasi untuk menampilkan grafik perbandingan tren."
         )
+
 
 
 # --- Tab Perbandingan Lokasi ---
