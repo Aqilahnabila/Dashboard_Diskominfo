@@ -2732,6 +2732,10 @@ def _build_toc(doc):
         r = tp.add_run()
         fc = OxmlElement("w:fldChar")
         fc.set(qn("w:fldCharType"), kind)
+
+        if kind == "begin":
+        fc.set(qn("w:dirty"), "true")
+        
         r._r.append(fc)
         return r
 
